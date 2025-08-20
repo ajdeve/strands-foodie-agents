@@ -103,7 +103,7 @@ sequenceDiagram
 
 ### 1. Strands Framework Integration
 
-This project demonstrates real Strands framework usage (v1.5.0):
+This project demonstrates Strands framework usage (v1.5.0):
 
 ```python
 from strands import Agent
@@ -117,7 +117,7 @@ class PlannerAgent(Agent):
         return state
 ```
 
-**Strands Benefits Implemented:**
+**Strands Benefits:**
 - **Production-Ready Agents**: Built-in observability, error handling, scalability
 - **Async Execution**: Modern Python async/await patterns
 - **State Management**: Efficient dataclass-based state handling
@@ -183,6 +183,51 @@ def get_weather(date: str) -> Dict[str, Any]:
 - **Documentation**: Automatic API specification generation
 - **Validation**: Built-in input/output validation
 - **Error Handling**: Standardized error reporting
+
+---
+
+## Tracing & Observability with Langfuse
+
+### Langfuse Cloud Integration
+
+The system integrates with **Langfuse Cloud** for comprehensive tracing and observability:
+
+```python
+# Environment configuration
+LANGFUSE_HOST=https://us.cloud.langfuse.com
+LANGFUSE_PUBLIC_KEY=your_public_key
+LANGFUSE_SECRET_KEY=your_secret_key
+LANGFUSE_TRACING_ENVIRONMENT=local-dev
+```
+
+### Trace Data Structure
+
+**Span Attributes Captured:**
+- **Agent Identification**: `agent`, `kind`, `step`
+- **MCP Integration**: `mcp.server`, `mcp.tool`
+- **A2A Communication**: `a2a.peer`
+- **Performance Metrics**: `tokens_in`, `tokens_out`, `cost_usd`, `latency_ms`
+- **Input/Output Data**: `span.input`, `span.output`, `input_data`, `output_data`
+
+### Observability Features
+
+**Real-Time Monitoring:**
+- **Live Agent Execution**: Track decision-making in real-time
+- **Performance Metrics**: Monitor latency, token usage, and costs
+- **Error Tracking**: Capture and analyze failures
+- **Decision Flow**: Visualize agent workflow progression
+
+**Trace Analysis:**
+- **Span Relationships**: Understand agent dependencies
+- **Data Flow**: Track information between agents
+- **Performance Bottlenecks**: Identify slow operations
+- **Quality Metrics**: Assess decision confidence and reasoning
+
+**Production Insights:**
+- **User Experience**: Monitor tour planning success rates
+- **System Health**: Track API response times and availability
+- **Business Metrics**: Analyze budget efficiency and venue selection
+- **Scalability**: Monitor resource usage and performance trends
 
 ---
 
@@ -304,11 +349,6 @@ The `--analyze` flag provides deep insights into agent decision-making:
 - Evaluates **criteria completeness** and **evidence strength**
 - Provides **actionable feedback** for improvement
 
-### Individual Agent Insights
-- Explains **WHY each agent made their decisions**
-- Shows **criteria, evidence, and confidence** for each choice
-- Tracks **next actions** and **workflow progression**
-
 ---
 
 ## Technical Architecture
@@ -364,40 +404,6 @@ graph LR
     A -.-> H
 ```
 
-### Data Flow Architecture
-
-```mermaid
-flowchart TD
-    A[User Input] --> B[Planner Agent]
-    B --> C[Task Orchestration]
-    
-    C --> D[Researcher Agent]
-    D --> E[Weather MCP Tool]
-    E --> F[Open-Meteo API]
-    F --> G[Weather Data]
-    
-    C --> H[Scout Agent]
-    H --> I[Venue MCP Tool]
-    I --> J[Venue Database]
-    J --> K[Filtered Venues]
-    
-    C --> L[Budget Service]
-    L --> M[Budget Allocation]
-    
-    G --> N[State Management]
-    K --> N
-    M --> N
-    
-    N --> O[Writer Agent]
-    O --> P[Itinerary Generation]
-    
-    N --> Q[Reviewer Agent]
-    Q --> R[Plan Scoring]
-    
-    P --> S[Final Tour Plan]
-    R --> S
-```
-
 ---
 
 ## Sample Analysis Report
@@ -410,28 +416,6 @@ See `sample_analysis_report.md` for a comprehensive example of the reasoning ana
 - **Individual Agent Performance** scores
 - **Technical Architecture** documentation
 - **Business Metrics** and recommendations
-
----
-
-## Key Benefits
-
-### Strands Framework Benefits
-- **Production Ready**: Built-in observability, error handling, scalability
-- **Advanced Reasoning**: Built-in reasoning engines and state management
-- **Developer Experience**: Type-safe agents, automatic documentation, testing utilities
-- **Ecosystem Integration**: Langfuse, multiple LLM providers, standard tool interfaces
-
-### A2A Communication Benefits
-- **Interoperability**: Different agent systems can communicate seamlessly
-- **Protocol Standards**: HTTP/JSON for universal compatibility
-- **Error Resilience**: Robust fallback mechanisms
-- **Performance**: Efficient communication patterns
-
-### MCP Tools Benefits
-- **Standardized Interface**: Consistent tool definitions across systems
-- **Documentation**: Automatic API specification generation
-- **Validation**: Built-in input/output validation
-- **Reusability**: Tools can be shared across different agent systems
 
 ---
 
@@ -524,21 +508,13 @@ make test
 - **MCP Specification**: [Model Context Protocol](https://modelcontextprotocol.io)
 - **Open-Meteo API**: [Weather Data](https://open-meteo.com)
 - **FastAPI**: [Web Framework](https://fastapi.tiangolo.com)
+- **Langfuse Cloud**: [Observability Platform](https://cloud.langfuse.com)
 
 ---
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-- **Strands Team** for the multi-agent framework
-- **Open-Meteo** for weather data
-- **FastAPI** for the web framework
-- **OpenAI** for inspiring the multi-agent approach
 
 ---
 
