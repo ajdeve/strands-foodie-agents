@@ -2,7 +2,6 @@
 
 **Generated:** 2025-08-19  
 **System:** Strands Framework v1.5.0  
-**Environment:** Production-Ready Multi-Agent AI System  
 **Trace ID:** `foodie_tour_2025_08_19_14_30_00`
 
 ---
