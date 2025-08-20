@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Alinea",
+    "neighborhood": "Lincoln Park",
+    "tags": ["fine_dining", "indoor", "elegant", "tasting_menu", "molecular_gastronomy"],
+    "avg_price": 350,
+    "blurb": "Three-Michelin-starred restaurant offering avant-garde tasting menus in an intimate, sophisticated setting.",
+    "outdoor": false
+  },
+  {
+    "name": "Big Star",
+    "neighborhood": "Wicker Park",
+    "tags": ["tacos", "outdoor", "lively", "casual", "margaritas"],
+    "avg_price": 25,
+    "blurb": "Popular taqueria with a vibrant patio serving authentic Mexican street food and craft cocktails.",
+    "outdoor": true
+  },
+  {
+    "name": "Girl & The Goat",
+    "neighborhood": "West Loop",
+    "tags": ["new_american", "indoor", "cozy", "creative", "farm_to_table"],
+    "avg_price": 85,
+    "blurb": "Stephanie Izard's acclaimed restaurant featuring bold flavors and inventive dishes in a warm, rustic atmosphere.",
+    "outdoor": false
+  },
+  {
+    "name": "Pequod's Pizza",
+    "neighborhood": "Lincoln Park",
+    "tags": ["pizza", "indoor", "casual", "deep_dish", "chicago_style"],
+    "avg_price": 35,
+    "blurb": "Famous for its caramelized crust deep-dish pizza in a laid-back, family-friendly setting.",
+    "outdoor": false
+  },
+  {
+    "name": "The Violet Hour",
+    "neighborhood": "Wicker Park",
+    "tags": ["cocktails", "indoor", "cozy", "speakeasy", "romantic"],
+    "avg_price": 45,
+    "blurb": "Intimate speakeasy-style bar serving expertly crafted cocktails in a sophisticated, dimly-lit atmosphere.",
+    "outdoor": false
+  },
+  {
+    "name": "Au Cheval",
+    "neighborhood": "West Loop",
+    "tags": ["burgers", "indoor", "lively", "casual", "comfort_food"],
+    "avg_price": 40,
+    "blurb": "Renowned for its decadent cheeseburger and bustling atmosphere in a modern diner setting.",
+    "outdoor": false
+  },
+  {
+    "name": "Cafe Ba-Ba-Reeba!",
+    "neighborhood": "Lincoln Park",
+    "tags": ["spanish", "tapas", "outdoor", "lively", "wine_bar"],
+    "avg_price": 55,
+    "blurb": "Vibrant Spanish tapas restaurant with a lively patio perfect for sharing small plates and sangria.",
+    "outdoor": true
+  },
+  {
+    "name": "Spiaggia",
+    "neighborhood": "Gold Coast",
+    "tags": ["italian", "indoor", "elegant", "fine_dining", "lake_view"],
+    "avg_price": 120,
+    "blurb": "Upscale Italian dining with stunning Lake Michigan views in an elegant, refined atmosphere.",
+    "outdoor": false
+  },
+  {
+    "name": "The Publican",
+    "neighborhood": "West Loop",
+    "tags": ["new_american", "indoor", "lively", "beer_hall", "farmhouse"],
+    "avg_price": 75,
+    "blurb": "Rustic-chic beer hall serving farm-to-table cuisine in a communal, energetic setting.",
+    "outdoor": false
+  },
+  {
+    "name": "Mott Street",
+    "neighborhood": "Wicker Park",
+    "tags": ["asian_fusion", "outdoor", "cozy", "creative", "intimate"],
+    "avg_price": 45,
+    "blurb": "Intimate Asian-fusion spot with a charming patio serving innovative small plates and craft cocktails.",
+    "outdoor": true
+  },
+  {
+    "name": "Boka",
+    "neighborhood": "Lincoln Park",
+    "tags": ["new_american", "indoor", "elegant", "fine_dining", "romantic"],
+    "avg_price": 95,
+    "blurb": "Michelin-starred restaurant offering refined American cuisine in an elegant, romantic setting.",
+    "outdoor": false
+  },
+  {
+    "name": "Parson's Chicken & Fish",
+    "neighborhood": "Logan Square",
+    "tags": ["fried_chicken", "outdoor", "lively", "casual", "beer_garden"],
+    "avg_price": 30,
+    "blurb": "Popular outdoor beer garden serving crispy fried chicken and refreshing cocktails in a fun, social atmosphere.",
+    "outdoor": true
+  }
+]
