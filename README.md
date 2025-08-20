@@ -1,4 +1,4 @@
-# 🍽️ Foodie Agents - Multi-Agent AI System
+# Foodie Agents - Multi-Agent AI System
 
 > **AI-powered food recommendation and restaurant discovery using the Strands framework**
 
@@ -7,23 +7,23 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)]()
 
-## 🎯 Overview
+## Overview
 
-Foodie Agents is a **production-ready multi-agent AI system** that creates personalized food tours using the [Strands framework](https://strandsagents.com). The system demonstrates advanced AI concepts including **Agent-to-Agent (A2A) communication**, **Model Context Protocol (MCP) tools**, and **real-time reasoning analysis**.
+Foodie Agents is a production-ready multi-agent AI system that creates personalized food tours using the [Strands framework](https://strandsagents.com). The system demonstrates advanced AI concepts including **Agent-to-Agent (A2A) communication**, **Model Context Protocol (MCP) tools**, and **real-time reasoning analysis**.
 
-### **Key Features**
-- 🧠 **5 Specialized Agents**: Planner, Researcher, Scout, Writer, Reviewer
-- 🌤️ **Weather-Adaptive Planning**: Real-time weather integration via MCP
-- 🏪 **Smart Venue Selection**: AI-powered restaurant filtering
-- 💰 **Budget Optimization**: Intelligent cost allocation with A2A communication
-- 📊 **Real-Time Analysis**: Live decision tracking and reasoning insights
-- 🚀 **Production Ready**: Built on Strands framework with enterprise features
+### Key Features
+- **5 Specialized Agents**: Planner, Researcher, Scout, Writer, Reviewer
+- **Weather-Adaptive Planning**: Real-time weather integration via MCP
+- **Smart Venue Selection**: AI-powered restaurant filtering
+- **Budget Optimization**: Intelligent cost allocation with A2A communication
+- **Real-Time Analysis**: Live decision tracking and reasoning insights
+- **Production Ready**: Built on Strands framework with enterprise features
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
-### **System Architecture Diagram**
+### System Architecture Diagram
 
 ```mermaid
 graph TB
@@ -63,7 +63,7 @@ graph TB
     style J fill:#f1f8e9
 ```
 
-### **Agent Workflow**
+### Agent Workflow
 
 ```mermaid
 sequenceDiagram
@@ -99,11 +99,11 @@ sequenceDiagram
 
 ---
 
-## 🔧 Core Concepts Implementation
+## Core Concepts Implementation
 
-### **1. Strands Framework Integration**
+### 1. Strands Framework Integration
 
-This project demonstrates **real Strands framework usage** (v1.5.0), not just compatibility:
+This project demonstrates real Strands framework usage (v1.5.0):
 
 ```python
 from strands import Agent
@@ -118,13 +118,13 @@ class PlannerAgent(Agent):
 ```
 
 **Strands Benefits Implemented:**
-- ✅ **Production-Ready Agents**: Built-in observability, error handling, scalability
-- ✅ **Async Execution**: Modern Python async/await patterns
-- ✅ **State Management**: Efficient dataclass-based state handling
-- ✅ **Tool Integration**: Native MCP tool support
-- ✅ **Multi-Agent Orchestration**: Built-in A2A communication patterns
+- **Production-Ready Agents**: Built-in observability, error handling, scalability
+- **Async Execution**: Modern Python async/await patterns
+- **State Management**: Efficient dataclass-based state handling
+- **Tool Integration**: Native MCP tool support
+- **Multi-Agent Orchestration**: Built-in A2A communication patterns
 
-### **2. Agent-to-Agent (A2A) Communication**
+### 2. Agent-to-Agent (A2A) Communication
 
 **A2A Pattern**: Different agent systems communicating via standard protocols
 
@@ -150,7 +150,7 @@ def call_budget_service(budget_per_person: float, stops: int) -> Dict[str, Any]:
 - **Timeout Management**: 5-second request timeouts
 - **State Propagation**: Seamless data flow between systems
 
-### **3. Model Context Protocol (MCP) Tools**
+### 3. Model Context Protocol (MCP) Tools
 
 **MCP Tools**: Standardized tool interfaces for agent capabilities
 
@@ -178,23 +178,23 @@ def get_weather(date: str) -> Dict[str, Any]:
 ```
 
 **MCP Benefits:**
-- ✅ **Standardized Interface**: Consistent tool definitions
-- ✅ **Interoperability**: Tools can be used across different agent systems
-- ✅ **Documentation**: Automatic API specification generation
-- ✅ **Validation**: Built-in input/output validation
-- ✅ **Error Handling**: Standardized error reporting
+- **Standardized Interface**: Consistent tool definitions
+- **Interoperability**: Tools can be used across different agent systems
+- **Documentation**: Automatic API specification generation
+- **Validation**: Built-in input/output validation
+- **Error Handling**: Standardized error reporting
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### **Prerequisites**
+### Prerequisites
 - Python 3.11+
 - Docker and Docker Compose
 - Ollama (for local LLM inference)
 - Langfuse Cloud account (free tier)
 
-### **1. Setup Environment**
+### 1. Setup Environment
 
 ```bash
 # Clone repository
@@ -208,7 +208,7 @@ make setup
 make obs-up
 ```
 
-### **2. Configure Services**
+### 2. Configure Services
 
 ```bash
 # Copy environment template
@@ -220,7 +220,7 @@ LANGFUSE_PUBLIC_KEY=your_public_key
 LANGFUSE_SECRET_KEY=your_secret_key
 ```
 
-### **3. Start Budget Service**
+### 3. Start Budget Service
 
 ```bash
 # Terminal 1: Start budget service
@@ -232,7 +232,7 @@ curl -X POST "http://localhost:8089/budget" \
   -d '{"budget_per_person": 100, "stops": 3}'
 ```
 
-### **4. Run the Application**
+### 4. Run the Application
 
 ```bash
 # Basic tour planning
@@ -252,9 +252,9 @@ python -m foodie_agents.run_foodie \
 
 ---
 
-## 📊 Available Commands
+## Available Commands
 
-### **Makefile Targets**
+### Makefile Targets
 
 | Target | Description |
 |--------|-------------|
@@ -269,7 +269,7 @@ python -m foodie_agents.run_foodie \
 | `clean` | Clean up generated files |
 | `status` | Show Postgres status and logs |
 
-### **Command Line Options**
+### Command Line Options
 
 ```bash
 python -m foodie_agents.run_foodie [OPTIONS]
@@ -285,35 +285,35 @@ Options:
 
 ---
 
-## 🧠 Real-Time Reasoning Analysis
+## Real-Time Reasoning Analysis
 
-The `--analyze` flag provides **deep insights into agent decision-making**:
+The `--analyze` flag provides deep insights into agent decision-making:
 
-### **Decision Pattern Analysis**
+### Decision Pattern Analysis
 - Shows **WHY** agents chose specific approaches
 - Identifies **consistent decision-making patterns**
 - Tracks **decision frequency and types**
 
-### **Confidence Distribution**
+### Confidence Distribution
 - Categorizes decisions by **confidence levels** (High/Medium/Low)
 - Shows how **certain agents are** about their choices
 - Identifies **potential areas of uncertainty**
 
-### **Decision Quality Assessment**
+### Decision Quality Assessment
 - Rates each agent's **reasoning quality** (Excellent/Good/Needs Improvement)
 - Evaluates **criteria completeness** and **evidence strength**
 - Provides **actionable feedback** for improvement
 
-### **Individual Agent Insights**
+### Individual Agent Insights
 - Explains **WHY each agent made their decisions**
 - Shows **criteria, evidence, and confidence** for each choice
 - Tracks **next actions** and **workflow progression**
 
 ---
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
-### **Core Files Structure**
+### Core Files Structure
 
 ```
 foodie_agents/
@@ -330,7 +330,7 @@ foodie_agents/
     └── client.py                 # HTTP communication
 ```
 
-### **Agent Architecture**
+### Agent Architecture
 
 ```mermaid
 graph LR
@@ -364,7 +364,7 @@ graph LR
     A -.-> H
 ```
 
-### **Data Flow Architecture**
+### Data Flow Architecture
 
 ```mermaid
 flowchart TD
@@ -400,7 +400,7 @@ flowchart TD
 
 ---
 
-## 🔍 Sample Analysis Report
+## Sample Analysis Report
 
 See `sample_analysis_report.md` for a comprehensive example of the reasoning analysis output, including:
 
@@ -413,31 +413,31 @@ See `sample_analysis_report.md` for a comprehensive example of the reasoning ana
 
 ---
 
-## 🌟 Key Benefits
+## Key Benefits
 
-### **Strands Framework Benefits**
-- 🚀 **Production Ready**: Built-in observability, error handling, scalability
-- 🧠 **Advanced Reasoning**: Built-in reasoning engines and state management
-- 🛠️ **Developer Experience**: Type-safe agents, automatic documentation, testing utilities
-- 🌐 **Ecosystem Integration**: Langfuse, multiple LLM providers, standard tool interfaces
+### Strands Framework Benefits
+- **Production Ready**: Built-in observability, error handling, scalability
+- **Advanced Reasoning**: Built-in reasoning engines and state management
+- **Developer Experience**: Type-safe agents, automatic documentation, testing utilities
+- **Ecosystem Integration**: Langfuse, multiple LLM providers, standard tool interfaces
 
-### **A2A Communication Benefits**
-- 🔗 **Interoperability**: Different agent systems can communicate seamlessly
-- 📡 **Protocol Standards**: HTTP/JSON for universal compatibility
-- 🛡️ **Error Resilience**: Robust fallback mechanisms
-- ⚡ **Performance**: Efficient communication patterns
+### A2A Communication Benefits
+- **Interoperability**: Different agent systems can communicate seamlessly
+- **Protocol Standards**: HTTP/JSON for universal compatibility
+- **Error Resilience**: Robust fallback mechanisms
+- **Performance**: Efficient communication patterns
 
-### **MCP Tools Benefits**
-- 🔧 **Standardized Interface**: Consistent tool definitions across systems
-- 📚 **Documentation**: Automatic API specification generation
-- ✅ **Validation**: Built-in input/output validation
-- 🔄 **Reusability**: Tools can be shared across different agent systems
+### MCP Tools Benefits
+- **Standardized Interface**: Consistent tool definitions across systems
+- **Documentation**: Automatic API specification generation
+- **Validation**: Built-in input/output validation
+- **Reusability**: Tools can be shared across different agent systems
 
 ---
 
-## 🧪 Testing
+## Testing
 
-### **End-to-End Testing**
+### End-to-End Testing
 
 ```bash
 # Test the full workflow with reasoning analysis
@@ -454,7 +454,7 @@ curl -X POST "http://localhost:8089/budget" \
   -d '{"budget_per_person": 100, "stops": 3}'
 ```
 
-### **Component Testing**
+### Component Testing
 
 ```bash
 # Test individual agents
@@ -466,18 +466,18 @@ python -c "from foodie_agents.strands_agents import get_weather; print('Weather 
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
-### **Production Deployment**
+### Production Deployment
 
-This system is **production-ready** and can be deployed to:
+This system is production-ready and can be deployed to:
 
 - **AWS Lambda**: Serverless execution
 - **Docker Containers**: Containerized deployment
 - **Kubernetes**: Scalable orchestration
 - **Cloud Functions**: Platform-agnostic deployment
 
-### **Environment Variables**
+### Environment Variables
 
 ```bash
 # Required
@@ -492,7 +492,7 @@ OLLAMA_MODEL=llama3:latest
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -500,7 +500,7 @@ OLLAMA_MODEL=llama3:latest
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### **Development Setup**
+### Development Setup
 
 ```bash
 # Install development dependencies
@@ -518,7 +518,7 @@ make test
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - **Strands Framework**: [https://strandsagents.com](https://strandsagents.com)
 - **MCP Specification**: [Model Context Protocol](https://modelcontextprotocol.io)
@@ -527,19 +527,19 @@ make test
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- **Strands Team** for the excellent multi-agent framework
-- **Open-Meteo** for free weather data
-- **FastAPI** for the modern web framework
+- **Strands Team** for the multi-agent framework
+- **Open-Meteo** for weather data
+- **FastAPI** for the web framework
 - **OpenAI** for inspiring the multi-agent approach
 
 ---
 
-**Built with ❤️ using the Strands Framework**
+**Built with the Strands Framework**
