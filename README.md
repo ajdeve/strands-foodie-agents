@@ -311,3 +311,32 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built with modern AI agent technologies**
 
 *For questions and support, please open an issue or reach out to the maintainers.*
+
+---
+
+## TLDR: What Does This Foodie Agent Do?
+
+**In simple terms:** This is an AI system that plans food tours for you automatically.
+
+### **What You Get:**
+- **Input:** Tell it your city, vibe preference (like "cozy"), and budget
+- **Output:** A complete food tour plan with restaurant recommendations, budget allocation, and a written itinerary
+
+### **How It Works:**
+1. **Checks the weather** to decide if venues should be indoor/outdoor
+2. **Finds restaurants** that match your vibe and budget
+3. **Splits your budget** intelligently across the selected venues
+4. **Writes a detailed itinerary** describing your food tour
+5. **Reviews the plan** to ensure quality and completeness
+
+### **Real Example:**
+- **Input:** "Chicago, cozy vibe, $100 budget"
+- **Output:** A 3-stop food tour with specific restaurants, budget allocation ($45 + $27 + $18), and a written description of your experience
+
+### **Why It's Useful:**
+- **Saves time** - No more researching restaurants manually
+- **Smart planning** - Considers weather, vibe, and budget constraints
+- **Complete package** - Gets you from idea to ready-to-use itinerary
+- **Transparent** - You can see exactly how it made decisions
+
+**Bottom line:** It's like having a personal food tour planner that works in seconds instead of hours.
