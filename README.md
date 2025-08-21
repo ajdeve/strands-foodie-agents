@@ -38,7 +38,7 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 
 ## Agent Architecture
 
-### **Actual Implementation Flow**
+### **Actual Implementation Flow with A2A Communication**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -56,18 +56,25 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
 │  │ Researcher  │─▶│    Scout    │─▶│   Budget    │─▶│   Writer    │       │
 │  │ (Weather)   │  │ (Venues)    │  │ (Split)     │  │ (Content)   │       │
-│  │ [MCP Tool]  │  │ [MCP Tool]  │  │ [Service]   │  │ [LLM]      │       │
+│  │ [MCP Tool]  │  │ [MCP Tool]  │  │ [A2A HTTP] │  │ [LLM]      │       │
+│  │ [Local]     │  │ [Local]     │  │ [External] │  │ [Local]    │       │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
 │                                                                             │
 │  ┌─────────────┐                                                           │
 │  │  Reviewer   │                                                           │
 │  │ (Quality)   │                                                           │
 │  │ [LLM]      │                                                           │
+│  │ [Local]    │                                                           │
 │  └─────────────┘                                                           │
 └─────────────────────────────────────────────────────────────────────────────┘
+
+**A2A Communication Patterns:**
+• **Budget Agent** ↔ **External Budget Service** (HTTP/REST, Port 8089)
+• **All Agents** ↔ **Planner** (State sharing, correlation IDs)
+• **MCP Tools** ↔ **External APIs** (Weather, Budget services)
 ```
 
-### **Data Flow Architecture**
+### **Data Flow Architecture with A2A Communication**
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -82,7 +89,7 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
 │  │ get_weather │  │filter_venues│  │call_budget  │  │  LLM Client │       │
 │  │ (Open-Meteo)│  │ (Local JSON)│  │ _service    │  │ (Ollama)    │       │
-│  │             │  │             │  │ (FastAPI)   │  │             │       │
+│  │ [External]  │  │ [Local]     │  │ [A2A HTTP] │  │ [Local]    │       │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
 └─────────────────────────────────────────────────────────────────────────────┘
                                                        │
@@ -94,7 +101,15 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 │  │ (Main)      │  │ (Sequential)│  │ (Input/Out) │  │ (Decisions) │       │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
 └─────────────────────────────────────────────────────────────────────────────┘
+
+**A2A Communication Channels:**
+• **Weather Tool** ↔ **Open-Meteo API** (External HTTP service)
+• **Budget Tool** ↔ **Budget Service** (External FastAPI, Port 8089)
+• **Venue Tool** ↔ **Local JSON** (Local file system)
+• **LLM Client** ↔ **Ollama** (Local LLM service)
 ```
+
+
 
 ### **Agent Responsibilities**
 
@@ -103,9 +118,9 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 | **Planner** | Orchestrates workflow | ✅ Primary | LLM routing + business rules |
 | **Researcher** | Weather analysis | ❌ None | API integration, deterministic logic |
 | **Scout** | Venue selection | ❌ None | Filtering, vibe matching |
-| **Budget** | Financial allocation | ❌ None | Weighted splits, buffer management |
+| **Budget** | Financial allocation | ❌ None | External service + local fallback |
 | **Writer** | Content generation | ✅ Primary | Rich itinerary descriptions |
-| **Reviewer** | Quality assessment | ⚠️ Fallback | Multi-criteria scoring |
+| **Reviewer** | Quality assessment | ✅ Primary | LLM rationale + scoring |
 
 ## Quick Start
 
@@ -154,6 +169,9 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3:latest
 OLLAMA_TIMEOUT=60
+
+# Budget service (optional - will fallback to local if not set)
+BUDGET_SERVICE_URL=http://localhost:8089
 ```
 
 ### **Run the System**
@@ -165,7 +183,7 @@ python -m foodie_agents.run_foodie
 
 # Or run individual components
 python -m foodie_agents.run_foodie              # Main application
-python -m foodie_agents.interop.budget_agent    # Budget service (in separate terminal)
+python -m foodie_agents.interop.budget_agent    # Budget service (runs on port 8089)
 ```
 
 #### **macOS/Linux Users**
@@ -175,7 +193,7 @@ make run-analyze
 
 # Or run individual components
 make run              # Main application
-make run-budget-agent # Budget service
+make run-budget-agent # Budget service (runs on port 8089)
 ```
 
 ## Observability & Tracing
@@ -226,6 +244,7 @@ Every agent decision is captured with:
 - **Confidence scores** and reasoning
 - **Next action** flows
 - **Execution timing** and performance
+- **LLM usage tracking** (success/failure, fallback reasons)
 
 ## LLM Integration
 
@@ -242,7 +261,7 @@ Every agent decision is captured with:
 
 ### **Reviewer Agent**
 - **Multi-criteria scoring** (weather, variety, budget)
-- **LLM rationale generation** with fallback
+- **LLM rationale generation** for scoring decisions
 - **Quality assessment** and recommendations
 
 ## Development
@@ -287,9 +306,11 @@ strands-foodie-agents/
 │   ├── langfuse_integration.py  # Observability layer
 │   ├── reasoning_analyzer.py    # Real-time analysis
 │   ├── run_foodie.py            # Main application entry
+│   ├── data/                    # Venue database
+│   │   └── chicago_venues.json  # Restaurant data
 │   └── interop/
-│       ├── budget_agent.py      # FastAPI budget service
-│       └── client.py            # External service client
+│       └── budget_agent.py      # FastAPI budget service
+├── docs/                        # Architecture documentation
 ├── Makefile                     # Build and run targets
 ├── pyproject.toml               # Project configuration
 ├── requirements.txt              # Dependencies
@@ -302,6 +323,7 @@ strands-foodie-agents/
 - **Typical execution time**: <4 seconds
 - **Success rate**: 100% (with fallback logic)
 - **LLM integration**: 3/3 agents use LLM successfully
+- **A2A communication**: External budget service + local fallback
 
 ### **Real Data Flow Example**
 
@@ -385,8 +407,11 @@ copy .env.example .env
 - **WSL2** (Windows Subsystem for Linux) recommended for Ollama
 - **Docker Desktop** alternative for containerized Ollama
 - **Native Windows** Ollama support (experimental)
-- **Decision confidence**: 90%+ across all agents
 
+#### **5. Budget Service on Windows**
+- **Port 8089** must be available for the budget service
+- **Firewall settings** may need to allow the port
+- **Alternative**: Use local budget calculation (no external service needed)
 ### **Fallback Mechanisms**
 - **LLM failure handling** with deterministic fallbacks
 - **Business rule enforcement** regardless of LLM output
@@ -408,11 +433,11 @@ OLLAMA_MODEL=llama3:latest  # or other Ollama models
 ```python
 # Workflow dependencies (enforced by normalization)
 DEFAULT_ORDER = [
-    "check_weather",      # Always first
-    "scout_venues",       # After weather
-    "split_budget",       # After venues
-    "write_itinerary",    # After budget
-    "review"              # Always last
+    "check_weather",      # Always first (weather dependency)
+    "scout_venues",       # After weather (indoor/outdoor requirement)
+    "split_budget",       # After venues (venue count needed)
+    "write_itinerary",    # After budget (budget allocation needed)
+    "review"              # Always last (final validation)
 ]
 ```
 
@@ -438,6 +463,7 @@ DEFAULT_ORDER = [
 - **Type safety** with Python 3.11+ and Pydantic
 - **Async execution** for optimal performance
 - **External service integration** with MCP adapters
+- **A2A communication** with external services
 - **Comprehensive testing** and validation
 
 ## Use Cases
@@ -450,7 +476,7 @@ DEFAULT_ORDER = [
 
 ### **Agent System Development**
 - **Strands framework** examples and patterns
-- **A2A communication** best practices
+- **A2A communication** with external services
 - **MCP tool integration** patterns
 - **Observability implementation** with Langfuse
 
@@ -471,7 +497,7 @@ DEFAULT_ORDER = [
 ### **Development Setup**
 ```bash
 # Install development dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
 
 # Run linting and formatting
 make lint
