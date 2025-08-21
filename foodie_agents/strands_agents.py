@@ -162,6 +162,7 @@ class WriterAgent(Agent):
         indoor_required = bool(state.weather.get("indoor_required"))
         
         # Prepare user prompt for LLM
+        venue_names = [v['name'] for v in state.shortlist]
         user_prompt = (
             f"City: {state.city}\n"
             f"Vibe: {state.vibe}\n"
@@ -170,8 +171,11 @@ class WriterAgent(Agent):
             f"Weather: {state.weather}\n"
             f"Shortlist: {state.shortlist}\n"
             f"Budget split: {state.budget_split}\n\n"
+            f"IMPORTANT: You must create an itinerary that includes ALL {len(venue_names)} venues:\n"
+            f"Required venues: {', '.join(venue_names)}\n\n"
             f"Create a food tour itinerary. Return ONLY valid JSON matching this schema:\n"
-            f'{{"title": "string", "stops": ["venue1", "venue2"], "summary": "string"}}'
+            f'{{"title": "string", "stops": {venue_names}, "summary": "string"}}\n\n'
+            f"The 'stops' array must contain exactly these {len(venue_names)} venue names: {venue_names}"
         )
         
         try:
