@@ -2,7 +2,7 @@
 
 from typing import Dict, Any, List, Literal, Optional
 from dataclasses import dataclass, field
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 import uuid
 
@@ -71,8 +71,31 @@ class RoutingPlan(BaseModel):
 class ItineraryJSON(BaseModel):
     """Structured itinerary from LLM."""
     title: str
-    stops: List[str]
+    stops: List[str]  # Keep simple string format for backward compatibility
     summary: str
+    venue_details: Optional[List[Dict[str, Any]]] = None  # Price, cuisine, atmosphere details
+    total_budget: Optional[float] = None
+    budget_breakdown: Optional[List[float]] = None
+    
+    # Alternative format for more detailed stops
+    detailed_stops: Optional[List[Dict[str, Any]]] = None  # Venue objects with name, price, description
+    
+    # Handle case where LLM puts detailed objects in stops field
+    @field_validator('stops', mode='before')
+    @classmethod
+    def validate_stops(cls, v):
+        if isinstance(v, list):
+            # Convert detailed venue objects to simple strings if needed
+            validated_stops = []
+            for stop in v:
+                if isinstance(stop, dict):
+                    # Extract name from venue object
+                    name = stop.get('name', str(stop))
+                    validated_stops.append(name)
+                else:
+                    validated_stops.append(str(stop))
+            return validated_stops
+        return v
 
 # ============================================================================
 # Reasoning Types

@@ -3,7 +3,15 @@ WRITER_SYSTEM = (
     "You are a concise foodie itinerary writer. "
     "Honor indoor/outdoor constraints and the total budget. "
     "The user will provide city, vibe, weather, shortlist, and per-stop budget split. "
-    "Respond ONLY with valid JSON for the requested schema."
+    "Please include price per each restaurant and details about what makes each venue special. "
+    "Create engaging descriptions that highlight the unique atmosphere, cuisine, and experience. "
+    "IMPORTANT: Return ONLY valid JSON with this exact structure:\n"
+    "{\n"
+    '  "title": "Tour Title",\n'
+    '  "stops": ["Venue Name 1", "Venue Name 2", "Venue Name 3"],\n'
+    '  "summary": "Brief description of the tour experience"\n'
+    "}\n"
+    "Do not include any extra text, code fences, or explanations outside the JSON."
 )
 
 REVIEWER_SYSTEM = (

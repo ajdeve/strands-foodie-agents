@@ -177,14 +177,58 @@ class WriterAgent(Agent):
         try:
             # Try LLM generation first
             js = structured_json(ItineraryJSON, WRITER_SYSTEM, user_prompt)
-            state.itinerary = f"{js.title}: {', '.join(js.stops)} — {js.summary}"
+            
+            # Build enhanced itinerary with price information
+            itinerary_parts = [js.title]
+            
+            # Check if LLM provided detailed venue information
+            detailed_venues = []
+            if hasattr(js, 'detailed_stops') and js.detailed_stops:
+                detailed_venues = js.detailed_stops
+            elif hasattr(js, 'venue_details') and js.venue_details:
+                detailed_venues = js.venue_details
+            
+            # Add venue details if available
+            if detailed_venues:
+                for i, venue in enumerate(detailed_venues):
+                    if isinstance(venue, dict):
+                        venue_name = venue.get('name', js.stops[i] if i < len(js.stops) else f"Venue {i+1}")
+                        price = venue.get('price', state.budget_split[i] if state.budget_split and i < len(state.budget_split) else "N/A")
+                        description = venue.get('description', '')
+                        
+                        if price != "N/A":
+                            itinerary_parts.append(f"{venue_name} (${price})")
+                        else:
+                            itinerary_parts.append(venue_name)
+                        
+                        if description:
+                            itinerary_parts.append(f"- {description}")
+                    else:
+                        # Fallback to simple stop name
+                        price = state.budget_split[i] if state.budget_split and i < len(state.budget_split) else "N/A"
+                        if price != "N/A":
+                            itinerary_parts.append(f"{venue} (${price})")
+                        else:
+                            itinerary_parts.append(venue)
+            else:
+                # Fallback to simple stops with budget information
+                for i, stop in enumerate(js.stops):
+                    price = state.budget_split[i] if state.budget_split and i < len(state.budget_split) else "N/A"
+                    if price != "N/A":
+                        itinerary_parts.append(f"{stop} (${price})")
+                    else:
+                        itinerary_parts.append(stop)
+            
+            itinerary_parts.append(f"— {js.summary}")
+            
+            state.itinerary = ": ".join(itinerary_parts)
             method = "llm"
             
             reasoning = WhyBasic(
                 agent="writer",
                 decision="llm_itinerary_v1",
-                criteria=["mention_all_venues_if_possible", "respect_indoor_rule"],
-                evidence=[f"llm_success=true", f"title={js.title}"],
+                criteria=["mention_all_venues_if_possible", "respect_indoor_rule", "include_price_info"],
+                evidence=[f"llm_success=true", f"title={js.title}", f"detailed_venues={len(detailed_venues)}"],
                 confidence=0.85,
                 next_action="06_review_plan"
             )
