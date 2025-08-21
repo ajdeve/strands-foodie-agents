@@ -70,6 +70,22 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 - Langfuse Cloud account (free tier available)
 
 ### **Installation**
+
+#### **Windows Users**
+```cmd
+# Clone the repository
+git clone <your-repo-url>
+cd strands-foodie-agents
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+copy .env.example .env
+# Edit .env with your Langfuse and Ollama credentials
+```
+
+#### **macOS/Linux Users**
 ```bash
 # Clone the repository
 git clone <your-repo-url>
@@ -96,6 +112,18 @@ OLLAMA_TIMEOUT=60
 ```
 
 ### **Run the System**
+
+#### **Windows Users**
+```cmd
+# Start with reasoning analysis (recommended)
+python -m foodie_agents.run_foodie
+
+# Or run individual components
+python -m foodie_agents.run_foodie              # Main application
+python -m foodie_agents.interop.budget_agent    # Budget service (in separate terminal)
+```
+
+#### **macOS/Linux Users**
 ```bash
 # Start with reasoning analysis (recommended)
 make run-analyze
@@ -158,6 +186,20 @@ Every agent decision is captured with:
 ## Development
 
 ### **Code Quality**
+
+#### **Windows Users**
+```cmd
+# Lint code
+python -m flake8 foodie_agents/
+
+# Format code
+python -m black foodie_agents/
+
+# Run tests
+python -m pytest tests/
+```
+
+#### **macOS/Linux Users**
 ```bash
 # Lint code
 make lint
@@ -197,7 +239,50 @@ strands-foodie-agents/
 ### **Execution Metrics**
 - **Typical execution time**: <4 seconds
 - **Success rate**: 100% (with fallback logic)
-- **LLM integration**: 2/3 agents use LLM successfully
+- **LLM integration**: 3/3 agents use LLM successfully
+
+## Windows-Specific Setup
+
+### **Prerequisites for Windows**
+- **Python 3.11+** installed and added to PATH
+- **Git for Windows** for repository cloning
+- **PowerShell** or **Command Prompt** (avoid Git Bash for Python commands)
+
+### **Common Windows Issues & Solutions**
+
+#### **1. Python Not Found**
+```cmd
+# Check if Python is in PATH
+python --version
+
+# If not found, add Python to PATH or use full path
+C:\Users\YourUsername\AppData\Local\Programs\Python\Python311\python.exe --version
+```
+
+#### **2. Module Import Errors**
+```cmd
+# Always run from project root directory
+cd C:\path\to\strands-foodie-agents
+
+# Use module syntax for imports
+python -m foodie_agents.run_foodie
+```
+
+#### **3. Environment Variables**
+```cmd
+# Windows environment variable syntax
+set LANGFUSE_PUBLIC_KEY=your_key_here
+set OLLAMA_BASE_URL=http://localhost:11434
+
+# Or use .env file (recommended)
+copy .env.example .env
+# Edit .env with Notepad or your preferred editor
+```
+
+#### **4. Ollama on Windows**
+- **WSL2** (Windows Subsystem for Linux) recommended for Ollama
+- **Docker Desktop** alternative for containerized Ollama
+- **Native Windows** Ollama support (experimental)
 - **Decision confidence**: 90%+ across all agents
 
 ### **Fallback Mechanisms**
