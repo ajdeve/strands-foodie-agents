@@ -255,6 +255,10 @@ class ReviewerAgent(Agent):
         state.review_score = min(score, 1.0)
         
         # Try LLM for rationale
+        llm_rationale_success = False
+        llm_rationale = None
+        fallback_reason = None
+        
         try:
             rationale = simple_text(
                 REVIEWER_SYSTEM,
@@ -265,21 +269,29 @@ class ReviewerAgent(Agent):
                     f"Explain why this score in 2-3 bullet points."
                 )
             )
-            if rationale:
+            if rationale and rationale.strip():
                 state.reviewer_notes = rationale
+                llm_rationale_success = True
+                llm_rationale = rationale
             else:
                 state.reviewer_notes = "Score calculated based on indoor compliance, variety, and budget efficiency."
-        except Exception:
+                fallback_reason = "LLM returned empty response"
+        except Exception as e:
             state.reviewer_notes = "Score calculated based on indoor compliance, variety, and budget efficiency."
+            fallback_reason = f"LLM error: {str(e)}"
         
         execution_time = time.time() - start_time
         
-        # Add reasoning
+        # Add reasoning with LLM status
         reasoning = WhyBasic(
             agent="reviewer",
             decision="rubric_score",
             criteria=["indoor_compliance", "variety_assessment", "budget_efficiency"],
-            evidence=[f"final_score={state.review_score}", f"rationale_generated=true"],
+            evidence=[
+                f"final_score={state.review_score}", 
+                f"llm_rationale_success={llm_rationale_success}",
+                f"fallback_reason={fallback_reason}" if fallback_reason else "llm_success=true"
+            ],
             confidence=0.9,
             next_action=None
         )

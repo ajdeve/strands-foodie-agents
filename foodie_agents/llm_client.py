@@ -62,6 +62,21 @@ def simple_text(system_prompt: str, user_prompt: str, max_chars: int = 2000) -> 
             timeout=config.timeout
         )
         resp.raise_for_status()
-        return resp.json().get("response", "")[:max_chars]
-    except Exception:
-        return ""
+        response_text = resp.json().get("response", "")
+        
+        # Validate we got actual content
+        if not response_text or response_text.strip() == "":
+            raise LLMError("LLM returned empty response")
+            
+        return response_text[:max_chars]
+        
+    except requests.exceptions.Timeout:
+        raise LLMError(f"LLM request timed out after {config.timeout}s")
+    except requests.exceptions.ConnectionError:
+        raise LLMError("LLM service connection failed")
+    except requests.exceptions.HTTPError as e:
+        raise LLMError(f"LLM service error: {e.response.status_code}")
+    except json.JSONDecodeError as e:
+        raise LLMError(f"Invalid JSON response from LLM: {e}")
+    except Exception as e:
+        raise LLMError(f"Unexpected LLM error: {e}")

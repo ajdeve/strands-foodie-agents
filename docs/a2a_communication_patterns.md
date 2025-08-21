@@ -1,19 +1,19 @@
-# 🔄 Agent-to-Agent (A2A) Communication Patterns
+# Agent-to-Agent (A2A) Communication Patterns
 
 > **Comprehensive guide to how A2A communication is implemented and utilized in the Foodie Agents system**
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [A2A Architecture](#a2a-architecture)
 3. [Communication Patterns](#communication-patterns)
 4. [Data Flow](#data-flow)
-5. [External Service Integration](#external-service-integration)
+5. [Agent Coordination](#agent-coordination)
 6. [Error Handling & Fallbacks](#error-handling--fallbacks)
 7. [Correlation & Tracing](#correlation--tracing)
 8. [Best Practices](#best-practices)
 
-## 🎯 Overview
+## Overview
 
 **Agent-to-Agent (A2A) communication** in Foodie Agents enables different agent systems to communicate via standard protocols, creating a **distributed, scalable architecture** where specialized services can interact seamlessly.
 
@@ -24,7 +24,7 @@
 - **Fault Isolation** - Failures in one service don't cascade to others
 - **Standardized Interfaces** - Consistent communication patterns across services
 
-## 🏗️ A2A Architecture
+## A2A Architecture
 
 ### **System Architecture**
 
@@ -47,7 +47,7 @@
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 │ A2A Communication
-                                │ (HTTP/JSON)
+                                │ (Strands Framework)
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    EXTERNAL SERVICES                            │
@@ -76,7 +76,7 @@
 2. **A2A Communication** - HTTP/JSON communication with external services
 3. **API Integration** - Third-party service integration (weather, venues)
 
-## 🔄 Communication Patterns
+## Communication Patterns
 
 ### **1. Synchronous Request-Response**
 
@@ -149,7 +149,7 @@ async def publish_budget_request(event: BudgetServiceEvent):
     await message_broker.publish("budget_requests", event)
 ```
 
-## 📊 Data Flow
+## Data Flow
 
 ### **Request Flow**
 
@@ -202,143 +202,131 @@ class BudgetAgent(Agent):
         return state
 ```
 
-## 🔌 External Service Integration
+## Agent Coordination
 
-### **1. Budget Service (FastAPI)**
+### **1. Planner Agent Orchestration**
 
 ```python
-# External FastAPI service for budget allocation
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-app = FastAPI(title="Budget Agent", version="0.1.0")
-
-class BudgetSplitRequest(BaseModel):
-    budget_per_person: float
-    stops: int
-
-class BudgetSplitResponse(BaseModel):
-    per_stop: List[float]
-    per_person_total: float
-    buffer_pct: float = 0.1
-
-@app.post("/split_budget", response_model=BudgetSplitResponse)
-async def split_budget(request: BudgetSplitRequest):
-    """A2A endpoint for budget allocation."""
-    try:
-        # Business logic for budget splitting
-        per_stop = allocate_budget(request.budget_per_person, request.stops)
+# Planner agent coordinates other agents via A2A patterns
+class PlannerLLMAgent(Agent):
+    async def run(self, state: FoodieState, context: Any = None, planner_span_id: str = None) -> FoodieState:
+        """Orchestrate the entire workflow using A2A communication."""
         
-        return BudgetSplitResponse(
-            per_stop=per_stop,
-            per_person_total=request.budget_per_person,
-            buffer_pct=0.1
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-```
-
-**A2A Benefits:**
-- **Independent deployment** - Can be scaled separately
-- **Technology choice** - FastAPI for high-performance web services
-- **Database isolation** - Separate data storage and management
-- **Team autonomy** - Different teams can develop/maintain
-
-### **2. Weather API Integration**
-
-```python
-# MCP tool that communicates with external weather service
-@tool(name="weather_tool", description="Get weather data for tour planning")
-def get_weather(date: str) -> Dict[str, Any]:
-    """A2A communication with Open-Meteo weather service."""
-    url = "https://api.open-meteo.com/v1/forecast"
-    params = {
-        "latitude": 41.8781,  # Chicago
-        "longitude": -87.6298,
-        "daily": "precipitation_probability_max",
-        "timezone": "America/Chicago"
-    }
+        # Step 1: Weather check (Researcher Agent)
+        weather_result = await self._execute_researcher_agent(state)
+        state.weather = weather_result
+        
+        # Step 2: Venue scouting (Scout Agent)
+        venues_result = await self._execute_scout_agent(state)
+        state.shortlist = venues_result
+        
+        # Step 3: Budget allocation (Budget Agent via A2A)
+        budget_result = await self._execute_budget_agent(state)
+        state.budget_split = budget_result
+        
+        # Step 4: Content writing (Writer Agent)
+        content_result = await self._execute_writer_agent(state)
+        state.itinerary = content_result
+        
+        # Step 5: Quality review (Reviewer Agent)
+        review_result = await self._execute_reviewer_agent(state)
+        state.review_score = review_result
+        
+        return state
     
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        
-        precip_prob = data["daily"]["precipitation_probability_max"][0]
-        return {
-            "precip_prob": precip_prob,
-            "condition": "rain" if precip_prob >= 50 else "clear",
-            "indoor_required": precip_prob >= 50,
-            "source": "open_meteo_api"
-        }
-    except Exception as e:
-        # Fallback to default weather
-        return {
-            "precip_prob": 0.0,
-            "condition": "clear",
-            "indoor_required": False,
-            "source": "fallback",
-            "error": str(e)
-        }
+    async def _execute_budget_agent(self, state: FoodieState) -> List[float]:
+        """Execute budget agent with A2A communication."""
+        try:
+            # A2A call to external budget service
+            budget_response = call_budget_service(
+                budget=state.budget,
+                stops=len(state.shortlist)
+            )
+            
+            if budget_response.get("per_stop"):
+                return budget_response["per_stop"]
+            else:
+                # Fallback to local logic
+                return self._local_budget_split(state.budget, len(state.shortlist))
+                
+        except Exception as e:
+            # Fallback to local logic
+            return self._local_budget_split(state.budget, len(state.shortlist))
 ```
 
-**A2A Benefits:**
-- **Real-time data** - Live weather information
-- **Service reliability** - Professional weather service
-- **Data accuracy** - Meteorological expertise
-- **Global coverage** - Multiple locations supported
-
-### **3. Venue Database Integration**
+### **2. Agent State Sharing**
 
 ```python
-# Local venue database with potential for A2A expansion
-@tool(name="venue_tool", description="Filter venues by criteria")
-def filter_venues(vibe: str, indoor_required: bool) -> List[Dict[str, Any]]:
-    """Filter venues from local database (future: A2A with venue service)."""
-    try:
-        # Load from local JSON (current implementation)
-        venues = load_local_venues()
-        
-        # Apply filters
-        filtered = [
-            v for v in venues
-            if v["vibe"] == vibe and v["indoor_compliant"] == indoor_required
-        ]
-        
-        return sorted(filtered, key=lambda x: x["avg_price"])[:3]
-        
-    except Exception as e:
-        # Fallback to hardcoded venues
-        return get_fallback_venues(vibe, indoor_required)
-```
-
-**Future A2A Enhancement:**
-```python
-# Future: A2A communication with venue recommendation service
-async def filter_venues_a2a(vibe: str, indoor_required: bool) -> List[Dict[str, Any]]:
-    """A2A communication with venue recommendation service."""
-    venue_service_url = "https://venue-recommendations.example.com/api/v1"
+# Agents share state through structured data flow
+class FoodieState:
+    """Shared state for A2A communication between agents."""
     
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{venue_service_url}/recommend",
-                json={
-                    "vibe": vibe,
-                    "indoor_required": indoor_required,
-                    "city": "Chicago",
-                    "max_results": 3
-                }
-            ) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return filter_venues_local(vibe, indoor_required)
-    except Exception:
-        return filter_venues_local(vibe, indoor_required)
+    def __init__(self):
+        self.city: str = "Chicago"
+        self.vibe: str = "cozy"
+        self.budget: float = 100.0
+        self.date: str = None
+        self.weather: Dict[str, Any] = {}
+        self.shortlist: List[Dict[str, Any]] = []
+        self.budget_split: List[float] = []
+        self.itinerary: str = ""
+        self.review_score: float = 0.0
+        self.reasoning: List[Dict[str, Any]] = []
+
+# State flow between agents
+async def execute_agent_workflow():
+    """Execute complete agent workflow with A2A communication."""
+    
+    # Initialize shared state
+    state = FoodieState()
+    
+    # Planner orchestrates the workflow
+    planner = PlannerLLMAgent()
+    final_state = await planner.run(state)
+    
+    return final_state
 ```
 
-## 🚨 Error Handling & Fallbacks
+### **3. Agent Dependency Management**
+
+```python
+# Agent dependencies managed through A2A communication
+class AgentDependencyManager:
+    """Manage agent dependencies and execution order."""
+    
+    def __init__(self):
+        self.dependencies = {
+            "check_weather": [],  # No dependencies
+            "scout_venues": ["check_weather"],  # Depends on weather
+            "split_budget": ["scout_venues"],   # Depends on venues
+            "write_itinerary": ["split_budget"], # Depends on budget
+            "review": ["write_itinerary"]       # Depends on content
+        }
+    
+    def get_execution_order(self) -> List[str]:
+        """Get topological sort of agent execution order."""
+        # Implementation of topological sorting
+        # Ensures dependencies are satisfied before execution
+        pass
+    
+    def can_execute(self, agent_name: str, completed_steps: List[str]) -> bool:
+        """Check if agent can execute based on dependencies."""
+        required_deps = self.dependencies.get(agent_name, [])
+        return all(dep in completed_steps for dep in required_deps)
+
+# Usage in planner
+dependency_manager = AgentDependencyManager()
+execution_order = dependency_manager.get_execution_order()
+
+for step in execution_order:
+    if dependency_manager.can_execute(step, completed_steps):
+        # Execute agent for this step
+        result = await execute_agent_step(step, state)
+        completed_steps.append(step)
+        state = update_state(state, step, result)
+```
+
+## Error Handling & Fallbacks
 
 ### **1. Service Unavailability**
 
@@ -478,7 +466,7 @@ def call_budget_service_with_circuit_breaker(budget: float, stops: int) -> Dict[
         return local_budget_split(budget, stops)
 ```
 
-## 🔍 Correlation & Tracing
+## Correlation & Tracing
 
 ### **1. Request Correlation**
 
@@ -573,7 +561,7 @@ def call_budget_service_with_tracing(budget: float, stops: int) -> Dict[str, Any
             raise
 ```
 
-## 🎯 Best Practices
+## Best Practices
 
 ### **1. Service Discovery**
 
@@ -694,7 +682,7 @@ def call_budget_service_with_rate_limiting(budget: float, stops: int) -> Dict[st
     return call_budget_service(budget, stops)
 ```
 
-## 📚 Summary
+## Summary
 
 **Agent-to-Agent (A2A) communication** in Foodie Agents provides:
 
@@ -724,4 +712,4 @@ def call_budget_service_with_rate_limiting(budget: float, stops: int) -> Dict[st
 2. **Weather API** - Open-Meteo for real-time weather data
 3. **Venue Database** - Local JSON with A2A expansion potential
 
-The Foodie Agents system demonstrates **enterprise-grade A2A communication patterns** with robust error handling, comprehensive monitoring, and scalable architecture! 🎉
+The Foodie Agents system demonstrates **enterprise-grade A2A communication patterns** with robust error handling, comprehensive monitoring, and scalable architecture!
