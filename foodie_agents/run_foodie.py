@@ -4,12 +4,20 @@
 import argparse
 import os
 import asyncio
+import time
 from typing import Dict, Any
+from dotenv import load_dotenv
 from .strands_agents import (
-    FoodieState, PlannerAgent, ResearcherAgent, ScoutAgent, 
-    WriterAgent, ReviewerAgent, call_budget_service
+    FoodieState, PlannerLLMAgent, ResearcherAgent, ScoutAgent, 
+    WriterAgent, ReviewerAgent
 )
 from .reasoning_analyzer import ReasoningAnalyzer
+from .langfuse_integration import (
+    start_tour_trace, end_tour_trace, start_planner_workflow,
+    add_planner_llm_status, add_planner_decisions, add_planner_final_workflow,
+    end_planner_workflow, start_agent_execution, add_agent_reasoning,
+    end_agent_execution, add_planner_llm_routing_reasoning
+)
 
 
 def analyze_reasoning_in_realtime(state: FoodieState):
@@ -29,6 +37,9 @@ def analyze_reasoning_in_realtime(state: FoodieState):
 
 async def main():
     """Main application entry point using Strands framework."""
+    # Load environment variables from .env file
+    load_dotenv()
+    
     parser = argparse.ArgumentParser(description="Foodie Agents - AI-powered food tour planning with Strands framework")
     parser.add_argument("--date", default="2025-08-23", help="Tour date (YYYY-MM-DD)")
     parser.add_argument("--budget", type=float, default=100.0, help="Budget per person")
@@ -47,14 +58,10 @@ async def main():
     )
     
     # Initialize agents
-    planner = PlannerAgent()
-    researcher = ResearcherAgent()
-    scout = ScoutAgent()
-    writer = WriterAgent()
-    reviewer = ReviewerAgent()
+    planner = PlannerLLMAgent()
     
     try:
-        # Execute agent workflow using Strands framework
+        # Start Langfuse tracing
         print("Starting Foodie Agents tour planning with Strands framework...")
         print(f"Date: {state.date}")
         print(f"Budget: ${state.budget}")
@@ -62,40 +69,36 @@ async def main():
         print(f"City: {state.city}")
         print()
         
+        trace_id = start_tour_trace(
+            city=state.city,
+            vibe=state.vibe,
+            budget=state.budget,
+            date=state.date
+        )
+        print(f"📊 Langfuse trace started: {trace_id}")
+        
         print("Executing agent workflow with Strands framework...")
         
-        # 1. Planner
-        state = await planner.run(state)
-        print("Planner: Tasks routed and assigned")
-        if args.analyze:
-            print(f"   Reasoning: {len(state.reasoning)} decision(s) captured")
+        # Start planner workflow tracing
+        planner_span_id = start_planner_workflow()
         
-        # 2. Researcher
-        state = await researcher.run(state)
-        print(f"Researcher: Weather checked - {state.weather['condition']} (indoor: {state.weather['indoor_required']})")
-        if args.analyze:
-            print(f"   Reasoning: {len(state.reasoning)} decision(s) captured")
+        # Execute complete workflow via planner
+        start_time = time.time()
+        state = await planner.run(state, planner_span_id=planner_span_id)
+        execution_time = time.time() - start_time
         
-        # 3. Scout
-        state = await scout.run(state)
-        print(f"Scout: {len(state.shortlist)} venues selected")
-        if args.analyze:
-            print(f"   Reasoning: {len(state.reasoning)} decision(s) captured")
+        # Add planner decisions to trace
+        planner_decisions = [r for r in state.reasoning if r["agent"] == "planner"]
+        add_planner_decisions(planner_span_id, planner_decisions)
         
-        # 4. Budget service (A2A communication)
-        budget_result = call_budget_service(state.budget, len(state.shortlist))
-        state.budget_split = budget_result["per_stop"]
-        print(f"Budget: Split into {len(state.budget_split)} stops")
+        # Add final workflow structure
+        final_steps = ["check_weather", "scout_venues", "split_budget", "write_itinerary", "review"]
+        add_planner_final_workflow(planner_span_id, final_steps)
         
-        # 5. Writer
-        state = await writer.run(state)
-        print("Writer: Itinerary generated")
-        if args.analyze:
-            print(f"   Reasoning: {len(state.reasoning)} decision(s) captured")
+        # End planner workflow
+        end_planner_workflow(planner_span_id)
         
-        # 6. Reviewer
-        state = await reviewer.run(state)
-        print(f"Reviewer: Plan scored {state.review_score:.1f}/1.0")
+        print("Planner: Complete workflow executed")
         if args.analyze:
             print(f"   Reasoning: {len(state.reasoning)} decision(s) captured")
         
@@ -130,8 +133,24 @@ async def main():
         
         print("Tour planning completed successfully with Strands framework!")
         
+        # End Langfuse trace
+        end_tour_trace(
+            final_score=state.review_score,
+            summary={
+                "total_venues": len(state.shortlist),
+                "total_budget": state.budget,
+                "execution_time": execution_time,
+                "reasoning_count": len(state.reasoning)
+            }
+        )
+        
     except Exception as e:
         print(f"Error during tour planning: {e}")
+        # End trace even on error
+        try:
+            end_tour_trace(final_score=0.0, summary={"error": str(e)})
+        except:
+            pass
         raise
 
 

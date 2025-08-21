@@ -6,15 +6,21 @@ from pydantic import BaseModel
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 import uvicorn
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.propagate import extract
-from opentelemetry import trace
+# OpenTelemetry imports (optional - will work without them)
+try:
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.propagate import extract
+    from opentelemetry import trace
+    OTEL_AVAILABLE = True
+except ImportError:
+    OTEL_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(title="Budget Agent", version="0.1.0")
-FastAPIInstrumentor().instrument_app(app)  # server spans
+if OTEL_AVAILABLE:
+    FastAPIInstrumentor().instrument_app(app)  # server spans
 
 
 class BudgetRequest(BaseModel):
@@ -184,16 +190,19 @@ budget_agent = BudgetAgent()
 @app.middleware("http")
 async def otel_context(request: Request, call_next):
     """Ensure incoming traceparent is honored."""
-    ctx = extract(request.headers)
-    token = trace.set_span_in_context(trace.get_current_span(), ctx)
-    try:
-        response = await call_next(request)
-    finally:
-        pass
-    return response
+    if OTEL_AVAILABLE:
+        ctx = extract(request.headers)
+        token = trace.set_span_in_context(trace.get_current_span(), ctx)
+        try:
+            response = await call_next(request)
+        finally:
+            pass
+        return response
+    else:
+        return await call_next(request)
 
 
-@app.post("/budget", response_model=BudgetSplitResponse)
+@app.post("/split_budget", response_model=BudgetSplitResponse)
 async def split_budget(request: BudgetSplitRequest):
     """Split budget across restaurant stops."""
     try:
@@ -210,6 +219,11 @@ async def split_budget(request: BudgetSplitRequest):
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {"message": "Budget Agent Service", "endpoints": ["/split_budget", "/health"]}
 
 
 if __name__ == "__main__":
