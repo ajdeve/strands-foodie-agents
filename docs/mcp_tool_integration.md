@@ -6,15 +6,18 @@
 
 1. [Overview](#overview)
 2. [MCP Architecture](#mcp-architecture)
-3. [Tool Implementations](#tool-implementations)
-4. [Tool Abstraction Layer](#tool-abstraction-layer)
-5. [External Service Integration](#external-service-integration)
-6. [Tool Validation & Fallbacks](#tool-validation--fallbacks)
-7. [Best Practices](#best-practices)
+3. [Communication Pattern Distinction](#communication-pattern-distinction)
+4. [Tool Implementations](#tool-implementations)
+5. [Tool Abstraction Layer](#tool-abstraction-layer)
+6. [External Service Integration](#external-service-integration)
+7. [Tool Validation & Fallbacks](#tool-validation--fallbacks)
+8. [Best Practices](#best-practices)
 
 ## Overview
 
-**Model Context Protocol (MCP) tools** in Foodie Agents provide a standardized way for agents to interact with external services and data sources. MCP tools act as **adapters** that abstract away the complexity of external APIs, databases, and services, allowing agents to focus on their core logic without making direct HTTP calls.
+**Model Context Protocol (MCP) tools** in Foodie Agents provide a standardized way for agents to interact with external services and APIs. MCP tools act as **adapters** that abstract away the complexity of external APIs and services, allowing agents to focus on their core logic without making direct HTTP calls.
+
+**Note:** This document covers MCP tools, but the system also includes local data processing and A2A communication patterns that are documented separately.
 
 ### **Key Benefits:**
 - **Tool Abstraction** - Agents never make direct HTTP calls
@@ -46,15 +49,15 @@
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 │ MCP Tool Layer
-                                │ (No direct HTTP calls)
+                                │ (External API integration)
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    MCP TOOL ADAPTERS                           │
 ├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   Weather Tool  │  │   Venue Tool    │  │  Budget Tool    │ │
-│  │   (API Client)  │  │   (Data Filter) │  │  (Service)      │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│  ┌─────────────────┐  ┌─────────────────┐                     │
+│  │   Weather Tool  │  │  LLM Client     │                     │
+│  │   (API Client)  │  │  (Ollama)       │                     │
+│  └─────────────────┘  └─────────────────┘                     │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 │ External Services
@@ -62,10 +65,10 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    EXTERNAL SERVICES                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │  Open-Meteo    │  │  Local JSON     │  │  FastAPI       │ │
-│  │  Weather API   │  │  Venue DB       │  │  Budget Service │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│  ┌─────────────────┐  ┌─────────────────┐                     │
+│  │  Open-Meteo    │  │  Ollama LLM     │                     │
+│  │  Weather API   │  │  Service        │                     │
+│  └─────────────────┘  └─────────────────┘                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -77,6 +80,29 @@
 4. **Type Safety** - Input/output validation with Pydantic models
 5. **Observability** - Complete tracing of tool usage and performance
 
+### **Communication Pattern Distinction**
+
+**MCP Tools (External API Integration):**
+- **Weather Tool** → Open-Meteo API (External HTTP service)
+- **LLM Client** → Ollama service (Local LLM service)
+
+**Local Data Processing (No External Calls):**
+- **Venue Filtering** → Local JSON data + business logic
+
+**A2A Communication (External Service):**
+- **Budget Service** → External FastAPI microservice (Port 8089)
+
+## Communication Pattern Distinction
+
+### **MCP Tools (External API Integration)**
+MCP tools provide standardized interfaces to external services and APIs, abstracting away the complexity of external communication.
+
+### **Local Data Processing**
+Local functions that process data without making external calls, often wrapped in `@tool` decorators for consistency.
+
+### **A2A Communication (External Services)**
+Agent-to-Agent communication with external microservices running as independent processes.
+
 ## Tool Implementations
 
 ### **1. Weather Tool (MCP API Client)**
@@ -85,7 +111,7 @@
 # foodie_agents/tools.py
 @tool(name="weather_tool", description="Get weather data for tour planning")
 def get_weather(date: str) -> Dict[str, Any]:
-    """MCP tool for weather data retrieval."""
+    """MCP tool for external weather API integration."""
     
     # Tool input validation
     if not date:
@@ -140,68 +166,93 @@ def get_weather(date: str) -> Dict[str, Any]:
 - **Data Processing** - Tool transforms raw API data into usable format
 - **Fallback Logic** - Tool provides sensible defaults when API fails
 
-### **2. Venue Tool (MCP Data Filter)**
+### **2. Local Data Processing (Venue Filtering)**
 
 ```python
 # foodie_agents/tools.py
 @tool(name="venue_tool", description="Filter venues by criteria")
-def filter_venues(vibe: str, indoor_required: bool, max_price: float = None) -> List[Dict[str, Any]]:
-    """MCP tool for venue filtering and selection."""
-    
-    # Tool input validation
-    if not vibe:
-        return []
-    
-    if max_price is not None and max_price <= 0:
-        return []
+def filter_venues(vibe: str, indoor_required: bool) -> List[Dict[str, Any]]:
+    """Local data processing for venue filtering and selection."""
     
     try:
-        # Load venue data (abstracted from agents)
-        venues = load_local_venues()
+        # Load venue data from local JSON file
+        with ir.files("foodie_agents.data").joinpath("chicago_venues.json").open("r", encoding="utf-8") as f:
+            venues = json.load(f)
+    except Exception:
+        # Fallback to hardcoded venues
+        venues = get_fallback_venues()
+    
+    # Apply business logic filters
+    filtered = []
+    for venue in venues:
+        # Indoor requirement check
+        if indoor_required and not is_indoor(venue):
+            continue
         
-        # Apply business logic filters
-        filtered = []
-        for venue in venues:
-            # Vibe matching
-            if venue["vibe"] != vibe:
-                continue
+        # Vibe matching (simple tag-based)
+        venue_tags = [t.lower() for t in venue.get("tags", [])]
+        if vibe.lower() and not any(vibe.lower() in tag for tag in venue_tags):
+            continue
             
-            # Indoor requirement
-            if indoor_required and not venue["indoor_compliant"]:
-                continue
-            
-            # Price filtering
-            if max_price and venue["avg_price"] > max_price:
-                continue
-            
-            filtered.append(venue)
+        filtered.append(venue)
+    
+    # Sort by price and return top 3
+    filtered.sort(key=lambda x: x.get("avg_price", 999))
+    return filtered[:3]
+```
+
+**Local Processing Benefits:**
+- **No External Calls** - Pure local data processing
+- **Business Logic** - Encapsulates venue filtering rules
+- **Fast Execution** - No network latency
+- **Reliable** - No dependency on external services
+- **Fallback Data** - Hardcoded backup venue options
+
+### **4. LLM Client (MCP Local Service Integration)**
+
+```python
+# foodie_agents/llm_client.py
+def structured_json(schema: Type[T], system_prompt: str, user_prompt: str) -> T:
+    """MCP tool for Ollama LLM integration with structured output."""
+    
+    prompt = f"{system_prompt}\n\nUser:\n{user_prompt}"
+    
+    try:
+        config = get_ollama_config()
+        resp = requests.post(
+            _ollama_url(),
+            json={
+                "model": config.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": float(os.getenv("LLM_TEMPERATURE", "0.3"))}
+            },
+            timeout=config.timeout
+        )
+        resp.raise_for_status()
+        response_text = resp.json().get("response", "")
         
-        # Sort by relevance and price
-        filtered.sort(key=lambda x: (x["rating"], -x["avg_price"]))
-        
-        # Return top results
-        return filtered[:3]
+        # Parse and validate structured output
+        return schema.model_validate_json(response_text)
         
     except Exception as e:
-        # Fallback to hardcoded venues (tool handles failure)
-        return get_fallback_venues(vibe, indoor_required, max_price)
+        raise LLMError(f"LLM request failed: {e}")
 ```
 
 **MCP Benefits:**
-- **Business Logic** - Tool encapsulates venue filtering rules
-- **Data Loading** - Tool manages data source complexity
-- **Sorting Logic** - Tool applies ranking algorithms
-- **Fallback Data** - Tool provides backup venue options
+- **Service Integration** - Standardized Ollama communication
+- **Structured Output** - Schema validation and parsing
+- **Error Handling** - Consistent error reporting
+- **Configuration** - Centralized LLM settings
 
-### **3. Budget Tool (MCP Service Integration)**
+### **5. A2A Communication (Budget Service Integration)**
 
 ```python
 # foodie_agents/tools.py
-@tool(name="budget_tool", description="Split budget across venues")
 def call_budget_service(budget: float, stops: int) -> Dict[str, Any]:
-    """MCP tool for budget allocation via external service."""
+    """A2A communication with external budget service."""
     
-    # Tool input validation
+    # Input validation
     if budget <= 0 or stops <= 0:
         return {
             "per_stop": [],
@@ -210,7 +261,7 @@ def call_budget_service(budget: float, stops: int) -> Dict[str, Any]:
             "error": "Invalid budget or stops parameters"
         }
     
-    # External service call (abstracted from agents)
+    # External service call (A2A communication)
     try:
         response = requests.post(
             f"{config.url}/split_budget",
@@ -227,15 +278,16 @@ def call_budget_service(budget: float, stops: int) -> Dict[str, Any]:
             raise ValueError("Invalid response format from budget service")
             
     except Exception as e:
-        # Fallback to local budget logic (tool handles failure)
+        # Fallback to local budget logic
         return local_budget_split(budget, stops)
 ```
 
-**MCP Benefits:**
-- **Service Abstraction** - Tool hides FastAPI service complexity
-- **Response Validation** - Tool ensures data integrity
-- **Timeout Handling** - Tool manages service response times
-- **Local Fallback** - Tool provides backup allocation logic
+**A2A Communication Benefits:**
+- **Service Abstraction** - Hides FastAPI service complexity
+- **Response Validation** - Ensures data integrity
+- **Timeout Handling** - Manages service response times
+- **Local Fallback** - Provides backup allocation logic
+- **Independent Process** - External service with its own lifecycle
 
 ## Tool Abstraction Layer
 
@@ -778,9 +830,9 @@ def filter_venues(vibe: str, indoor_required: bool) -> List[Dict[str, Any]]:
 4. **Performance Optimization** - Caching and efficient execution
 5. **Observability** - Complete tracing and monitoring
 
-### **Current MCP Tools:**
-1. **Weather Tool** - Open-Meteo API integration with fallback
-2. **Venue Tool** - Local JSON data filtering with backup data
-3. **Budget Tool** - FastAPI service integration with local logic
+### **Current Communication Patterns:**
+1. **MCP Tools:** Weather API (External), LLM Client (Local)
+2. **Local Processing:** Venue filtering (Local JSON, business logic)
+3. **A2A Communication:** Budget Service (External FastAPI, Port 8089)
 
 The Foodie Agents system demonstrates **enterprise-grade MCP tool integration** with robust error handling, comprehensive validation, and scalable architecture!
