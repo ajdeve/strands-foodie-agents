@@ -25,10 +25,16 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 - **LLM-powered routing decisions** with business rule validation
 
 ### **Model Context Protocol (MCP) Tools**
-- **Weather API integration** via MCP adapters
-- **Venue filtering** with intelligent criteria matching
-- **Budget service integration** with external FastAPI microservice
+- **Weather API integration** via MCP adapters (Open-Meteo)
+- **Venue filtering** with intelligent criteria matching (Local JSON)
+- **LLM client integration** for Ollama communication
 - **Tool abstraction** - agents never make direct HTTP calls
+
+### **Agent-to-Agent (A2A) Communication**
+- **Budget service integration** with external FastAPI microservice (Port 8089)
+- **Independent process communication** across service boundaries
+- **Structured API contracts** with Pydantic models
+- **Service discovery** and health checks
 
 ### **Observability Stack**
 - **Langfuse** for trace collection and analysis
@@ -47,7 +53,7 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 │  │   LLM Planning  │  │ Business Rules  │  │    Sequential Execution     │ │
 │  │  (Ollama)       │  │  Validation     │  │   (Step-by-step)           │ │
 │  └─────────────────┘  └─────────────────┘  └─────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────────────────┐
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -57,7 +63,7 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 │  │ Researcher  │─▶│    Scout    │─▶│   Budget    │─▶│   Writer    │       │
 │  │ (Weather)   │  │ (Venues)    │  │ (Split)     │  │ (Content)   │       │
 │  │ [MCP Tool]  │  │ [MCP Tool]  │  │ [A2A HTTP] │  │ [LLM]      │       │
-│  │ [Local]     │  │ [Local]     │  │ [External] │  │ [Local]    │       │
+│  │ [External]  │  │ [Local]     │  │ [External] │  │ [Local]    │       │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
 │                                                                             │
 │  ┌─────────────┐                                                           │
@@ -68,10 +74,10 @@ Foodie Agents is a multi-agent AI system that creates personalized food tours us
 │  └─────────────┘                                                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-**A2A Communication Patterns:**
-• **Budget Agent** ↔ **External Budget Service** (HTTP/REST, Port 8089)
-• **All Agents** ↔ **Planner** (State sharing, correlation IDs)
-• **MCP Tools** ↔ **External APIs** (Weather, Budget services)
+**Communication Patterns:**
+• **MCP Tools:** Weather API, Local JSON, Local LLM
+• **A2A Service:** Budget Service (External FastAPI, Port 8089)
+• **Agent Coordination:** State sharing via FoodieState
 ```
 
 ### **Data Flow Architecture with A2A Communication**
